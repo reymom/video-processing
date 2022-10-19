@@ -118,3 +118,20 @@ fn find_ui() -> Result<Element> {
             .ok_or_else(|| anyhow!("UI element not found"))
     })
 }
+
+pub fn hide_ui() -> Result<()> {
+    let ui = find_ui()?;
+
+    if let Some(first_child) = ui.first_child() {
+        ui.remove_child(&first_child)
+            .map(|_removed_child| ())
+            .map_err(|err| anyhow!("error removing first child {:#?}", err))
+            .and_then(|_unit| {
+                canvas()?
+                    .focus()
+                    .map_err(|err| anyhow!("Could not set focus to canvas! {:#?}", err))
+            })
+    } else {
+        Ok(())
+    }
+}

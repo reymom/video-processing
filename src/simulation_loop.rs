@@ -1,12 +1,19 @@
 use crate::browser::{context, create_raf_closure, now, request_animation_frame, LoopClosure};
 use crate::image::Renderer;
-use crate::plot::Plot;
 use anyhow::anyhow;
 use anyhow::Result;
+use async_trait::async_trait;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-pub struct Simulation {
+#[async_trait(?Send)]
+pub trait Simulation {
+    async fn initialize(&self) -> Result<Box<dyn Simulation>>;
+    fn update(&mut self);
+    fn draw(&self, render: &Renderer);
+}
+
+pub struct SimulationLoop {
     last_frame: f64,
     accumulated_delta: f32,
 }
@@ -15,10 +22,10 @@ type SharedLoopClosure = Rc<RefCell<Option<LoopClosure>>>;
 
 const FRAME_SIZE: f32 = 1.0 / 60.0 * 1000.0;
 
-impl Simulation {
-    pub async fn start(plot: impl Plot + 'static) -> Result<()> {
+impl SimulationLoop {
+    pub async fn start(plot: impl Simulation + 'static) -> Result<()> {
         let mut plot = plot.initialize().await?;
-        let mut simulation = Simulation {
+        let mut simulation = SimulationLoop {
             last_frame: now()?,
             accumulated_delta: 0.0,
         };

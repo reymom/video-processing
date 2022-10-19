@@ -1,42 +1,26 @@
 use crate::browser;
 use crate::button;
 use crate::image;
-
+use crate::plot_state::PlotMachine;
+use crate::simulation_loop::Simulation;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
-use futures::channel::mpsc::{unbounded, UnboundedReceiver};
 use image::{Image, Renderer};
 
-#[async_trait(?Send)]
-pub trait Plot {
-    async fn initialize(&self) -> Result<Box<dyn Plot>>;
-    fn update(&mut self);
-    fn draw(&self, render: &Renderer);
+pub struct SimulationPlot {
+    machine: Option<PlotMachine>,
 }
 
-pub struct ImagePlot {
-    image: Option<Image>,
-    simulation_handler: UnboundedReceiver<()>,
-}
-
-impl ImagePlot {
+impl SimulationPlot {
     pub fn new() -> Self {
-        let (_, receiver) = unbounded();
-        ImagePlot {
-            image: None,
-            simulation_handler: receiver,
-        }
-    }
-
-    fn run_simulation_pressed(&mut self) -> bool {
-        matches!(self.simulation_handler.try_next(), Ok(Some(())))
+        SimulationPlot { machine: None }
     }
 }
 
 #[async_trait(?Send)]
-impl Plot for ImagePlot {
-    async fn initialize(&self) -> Result<Box<dyn Plot>> {
-        match self.image {
+impl Simulation for SimulationPlot {
+    async fn initialize(&self) -> Result<Box<dyn Simulation>> {
+        match self.machine {
             None => {
                 log!("none in initialize");
                 let button =
@@ -44,9 +28,12 @@ impl Plot for ImagePlot {
                         .and_then(|_unit| browser::find_html_element_by_id("run_simulation"))
                         .map(button::add_click_handler)
                         .unwrap();
-                Ok(Box::new(ImagePlot {
-                    image: Some(Image::new(image::load_image("me.jpg").await?)),
-                    simulation_handler: button,
+
+                let machine =
+                    PlotMachine::new(Image::new(image::load_image("me.jpg").await?), button);
+
+                Ok(Box::new(SimulationPlot {
+                    machine: Some(machine),
                 }))
             }
             Some(_) => Err(anyhow!("Error: Plot is already initialized!")),
@@ -54,16 +41,16 @@ impl Plot for ImagePlot {
     }
 
     fn update(&mut self) {
-        if let Some(image) = self.image.take() {
-            self.image.replace(image.update());
+        if let Some(machine) = self.machine.take() {
+            self.machine.replace(machine.update());
         }
-        assert!(self.image.is_some());
+        assert!(self.machine.is_some());
     }
 
     fn draw(&self, renderer: &Renderer) {
-        if let Some(image) = &self.image {
+        if let Some(machine) = &self.machine {
             log!("drawing");
-            image.draw(renderer);
+            machine.draw(renderer);
         };
     }
 }
