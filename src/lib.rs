@@ -1,10 +1,11 @@
 #[macro_use]
 mod browser;
-mod app;
+mod simulation;
+mod button;
 mod image;
 mod plot;
 
-use app::App;
+use simulation::Simulation;
 use browser::spawn_local;
 use plot::ImagePlot;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
@@ -14,7 +15,7 @@ pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
     log!("testing log! macro :). Hello world again!");
     spawn_local(async move {
-        App::start(ImagePlot::new())
+        Simulation::start(ImagePlot::new())
             .await
             .expect("could not start Plot");
     });

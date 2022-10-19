@@ -29,6 +29,10 @@ impl Image {
     pub fn draw(&self, renderer: &Renderer) {
         renderer.draw_image(&self.element, &self.position);
     }
+
+    pub fn update(self) -> Self {
+        self
+    }
 }
 
 pub async fn load_image(source: &str) -> Result<HtmlImageElement> {

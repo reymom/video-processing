@@ -1,8 +1,11 @@
 use anyhow::{anyhow, Result};
 use std::future::Future;
-use wasm_bindgen::closure::{Closure, WasmClosureFnOnce};
+use wasm_bindgen::closure::{Closure, WasmClosure, WasmClosureFnOnce};
 use wasm_bindgen::JsCast;
-use web_sys::{CanvasRenderingContext2d, Document, HtmlCanvasElement, HtmlImageElement, Window};
+use web_sys::{
+    CanvasRenderingContext2d, Document, Element, HtmlCanvasElement, HtmlElement, HtmlImageElement,
+    Window,
+};
 
 macro_rules! log {
     ($($t:tt)*) => {
@@ -22,7 +25,13 @@ macro_rules! panic {
     };
 }
 
-// pub type LoopClosure = Closure<dyn FnMut(f64)>;
+pub fn request_animation_frame(callback: &LoopClosure) -> Result<i32> {
+    window()?
+        .request_animation_frame(callback.as_ref().unchecked_ref())
+        .map_err(|err| anyhow!("Cannot request animation frame {:#?}", err))
+}
+
+pub type LoopClosure = Closure<dyn FnMut(f64)>;
 
 pub fn closure_once<F, A, R>(fn_once: F) -> Closure<F::FnMut>
 where
@@ -31,19 +40,26 @@ where
     Closure::once(fn_once)
 }
 
-// pub fn create_raf_closure(f: impl FnMut(f64) + 'static) -> LoopClosure {
-//     closure_wrap(Box::new(f))
-// }
+pub fn create_raf_closure(f: impl FnMut(f64) + 'static) -> LoopClosure {
+    closure_wrap(Box::new(f))
+}
 
-// pub fn closure_wrap<T: WasmClosure + ?Sized>(data: Box<T>) -> Closure<T> {
-//     Closure::wrap(data)
-// }
+pub fn closure_wrap<T: WasmClosure + ?Sized>(data: Box<T>) -> Closure<T> {
+    Closure::wrap(data)
+}
 
 pub fn spawn_local<F>(future: F)
 where
     F: Future<Output = ()> + 'static,
 {
     wasm_bindgen_futures::spawn_local(future);
+}
+
+pub fn now() -> Result<f64> {
+    Ok(window()?
+        .performance()
+        .ok_or_else(|| anyhow!("Performance object not found"))?
+        .now())
 }
 
 pub fn new_image() -> Result<HtmlImageElement> {
@@ -75,4 +91,30 @@ pub fn context() -> Result<CanvasRenderingContext2d> {
         .ok_or_else(|| anyhow!("no 2d context found"))?
         .dyn_into::<CanvasRenderingContext2d>()
         .map_err(|element| anyhow!("error converting {:#?} to HtmlCanvasElement", element))
+}
+
+pub fn find_html_element_by_id(id: &str) -> Result<HtmlElement> {
+    document()
+        .and_then(|doc| {
+            doc.get_element_by_id(id)
+                .ok_or_else(|| anyhow!("Element with id {} not found", id))
+        })
+        .and_then(|element| {
+            element
+                .dyn_into::<HtmlElement>()
+                .map_err(|err| anyhow!("Could not cast into HtmlElement {:#?}", err))
+        })
+}
+
+pub fn draw_ui(html: &str) -> Result<()> {
+    find_ui()?
+        .insert_adjacent_html("afterbegin", html)
+        .map_err(|err| anyhow!("Could not insert html {:#?}", err))
+}
+
+fn find_ui() -> Result<Element> {
+    document().and_then(|doc| {
+        doc.get_element_by_id("ui")
+            .ok_or_else(|| anyhow!("UI element not found"))
+    })
 }
