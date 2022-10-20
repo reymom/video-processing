@@ -3,12 +3,18 @@ pub mod state_implementations {
     use crate::button;
     use crate::constants::*;
     use crate::image::{Image, Renderer};
-    use crate::plot_state::PlotMachine;
+    use crate::plot_machine::PlotMachine;
     use futures::channel::mpsc::UnboundedReceiver;
 
     pub struct PlotState<T> {
         _state: T,
         plot: Image,
+    }
+
+    impl<T> PlotState<T> {
+        pub fn draw(&self, renderer: &Renderer) {
+            self.plot.draw(renderer);
+        }
     }
 
     pub struct Ready {
@@ -54,7 +60,7 @@ pub mod state_implementations {
         }
     }
 
-    enum ReadyStateTransition {
+    pub enum ReadyStateTransition {
         Simulate(PlotState<Simulating>),
         Same(PlotState<Ready>),
     }
@@ -69,16 +75,21 @@ pub mod state_implementations {
     }
 
     impl PlotState<Ready> {
+        pub fn new(image: Image, button: UnboundedReceiver<()>) -> PlotState<Ready> {
+            PlotState {
+                _state: Ready {
+                    start_event: button,
+                },
+                plot: image,
+            }
+        }
+
         pub fn update(mut self) -> ReadyStateTransition {
             if self._state.run_simulation_pressed() {
                 ReadyStateTransition::Simulate(self.start_simulation())
             } else {
                 ReadyStateTransition::Same(self)
             }
-        }
-
-        pub fn draw(self, renderer: &Renderer) {
-            self.plot.draw(renderer);
         }
 
         fn start_simulation(self) -> PlotState<Simulating> {
@@ -118,7 +129,7 @@ pub mod state_implementations {
         }
     }
 
-    enum SimulatingStateTransition {
+    pub enum SimulatingStateTransition {
         Pause(PlotState<Ready>),
         Finish(PlotState<End>),
         Simulate(PlotState<Simulating>),
@@ -143,10 +154,6 @@ pub mod state_implementations {
             } else {
                 SimulatingStateTransition::Simulate(self.run_simulation_step())
             }
-        }
-
-        pub fn draw(self, renderer: &Renderer) {
-            self.plot.draw(renderer);
         }
 
         fn pause_simulation(self) -> PlotState<Ready> {
@@ -205,7 +212,7 @@ pub mod state_implementations {
         }
     }
 
-    enum EndStateTransition {
+    pub enum EndStateTransition {
         Refresh(PlotState<Ready>),
         Save(PlotState<End>),
         Continue(PlotState<End>),
@@ -230,10 +237,6 @@ pub mod state_implementations {
             } else {
                 EndStateTransition::Continue(self)
             }
-        }
-
-        pub fn draw(self, renderer: &Renderer) {
-            self.plot.draw(renderer);
         }
 
         fn refresh_image(mut self) -> PlotState<Ready> {

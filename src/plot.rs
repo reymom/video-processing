@@ -2,7 +2,7 @@ use crate::browser;
 use crate::button;
 use crate::constants::{image_source, run_simulation_button, run_simulation_id};
 use crate::image;
-use crate::plot_state::PlotMachine;
+use crate::plot_machine::PlotMachine;
 use crate::simulation_loop::Simulation;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;

@@ -4,9 +4,9 @@ mod button;
 mod constants;
 mod image;
 mod plot;
-mod plot_state;
+mod plot_machine;
+mod plot_states;
 mod simulation_loop;
-mod state_impls;
 
 use browser::spawn_local;
 use plot::SimulationPlot;
