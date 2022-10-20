@@ -1,10 +1,12 @@
 #[macro_use]
 mod browser;
 mod button;
+mod constants;
 mod image;
 mod plot;
 mod plot_state;
 mod simulation_loop;
+mod state_impls;
 
 use browser::spawn_local;
 use plot::SimulationPlot;

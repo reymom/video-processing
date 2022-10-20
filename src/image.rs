@@ -2,6 +2,7 @@ use crate::browser;
 
 use anyhow::{anyhow, Result};
 use futures::channel::oneshot::channel;
+use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Mutex;
 use wasm_bindgen::closure::Closure;
@@ -15,19 +16,30 @@ pub struct Point {
 
 pub struct Image {
     element: HtmlImageElement,
+    initial_element: HtmlImageElement,
     position: Point,
 }
 
 impl Image {
-    pub fn new(element: HtmlImageElement) -> Self {
+    pub fn new(element: HtmlImageElement, initial_element: HtmlImageElement) -> Self {
         Self {
             element,
+            initial_element,
             position: Point { x: 0, y: 0 },
         }
     }
 
     pub fn draw(&self, renderer: &Renderer) {
         renderer.draw_image(&self.element, &self.position);
+    }
+
+    pub fn refresh(&mut self) {
+        self.element = self.initial_element.clone();
+    }
+
+    pub fn run_simulation_step(&mut self) {
+        // todo: change pixels
+        // self.element =
     }
 }
 

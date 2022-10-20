@@ -1,5 +1,6 @@
 use crate::browser;
 use crate::button;
+use crate::constants::{image_source, run_simulation_button, run_simulation_id};
 use crate::image;
 use crate::plot_state::PlotMachine;
 use crate::simulation_loop::Simulation;
@@ -23,14 +24,19 @@ impl Simulation for SimulationPlot {
         match self.machine {
             None => {
                 log!("none in initialize");
-                let button =
-                    browser::draw_ui("<button id='run_simulation'>Run simulation</button>")
-                        .and_then(|_unit| browser::find_html_element_by_id("run_simulation"))
-                        .map(button::add_click_handler)
-                        .unwrap();
+                let button = browser::draw_ui(run_simulation_button)
+                    .and_then(|_unit| browser::find_html_element_by_id(run_simulation_id))
+                    .map(button::add_click_handler)
+                    .unwrap();
 
-                let machine =
-                    PlotMachine::new(Image::new(image::load_image("me.jpg").await?), button);
+                //todo: this repetition is due to the fact that HtmlImageElement does not implement the Copy trait and cannot clone
+                let machine = PlotMachine::new(
+                    Image::new(
+                        image::load_image(image_source).await?,
+                        image::load_image(image_source).await?,
+                    ),
+                    button,
+                );
 
                 Ok(Box::new(SimulationPlot {
                     machine: Some(machine),
