@@ -1,4 +1,4 @@
-use crate::image::{Image, Renderer};
+use crate::canvas::{Image, Renderer};
 use crate::plot_states::state_implementations::{End, PlotState, Ready, Simulating};
 use futures::channel::mpsc::UnboundedReceiver;
 

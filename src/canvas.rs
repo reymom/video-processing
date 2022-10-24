@@ -2,7 +2,6 @@ use crate::browser;
 
 use anyhow::{anyhow, Result};
 use futures::channel::oneshot::channel;
-use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::Mutex;
 use wasm_bindgen::closure::Closure;

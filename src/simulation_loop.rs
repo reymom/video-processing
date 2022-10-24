@@ -1,5 +1,5 @@
 use crate::browser::{context, create_raf_closure, now, request_animation_frame, LoopClosure};
-use crate::image::Renderer;
+use crate::canvas::Renderer;
 use anyhow::anyhow;
 use anyhow::Result;
 use async_trait::async_trait;

@@ -1,8 +1,8 @@
 pub mod state_implementations {
     use crate::browser;
     use crate::button;
+    use crate::canvas::{Image, Renderer};
     use crate::constants::*;
-    use crate::image::{Image, Renderer};
     use crate::plot_machine::PlotMachine;
     use futures::channel::mpsc::UnboundedReceiver;
 
@@ -96,12 +96,12 @@ pub mod state_implementations {
             if let Err(err) = browser::hide_ui() {
                 error!("Error hiding the browser {:#?}", err);
             }
-            let pause_event = browser::draw_ui(pause_simulation_button)
-                .and_then(|_unit| browser::find_html_element_by_id(pause_simulation_id))
+            let pause_event = browser::draw_ui(PAUSE_SIMULATION_BUTTON)
+                .and_then(|_unit| browser::find_html_element_by_id(PAUSE_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
-            let finish_event = browser::draw_ui(finish_simulation_button)
-                .and_then(|_unit| browser::find_html_element_by_id(finish_simulation_id))
+            let finish_event = browser::draw_ui(FINISH_SIMULATION_BUTTON)
+                .and_then(|_unit| browser::find_html_element_by_id(FINISH_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
             PlotState {
@@ -160,26 +160,23 @@ pub mod state_implementations {
             if let Err(err) = browser::hide_ui() {
                 error!("Error hiding the browser {:#?}", err);
             }
-            let start_event = browser::draw_ui(run_simulation_button)
-                .and_then(|_unit| browser::find_html_element_by_id(run_simulation_id))
+            let start_event = browser::draw_ui(RUN_SIMULATION_BUTTON)
+                .and_then(|_unit| browser::find_html_element_by_id(RUN_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
-            PlotState {
-                _state: Ready { start_event },
-                plot: self.plot,
-            }
+            PlotState::new(self.plot, start_event)
         }
 
         fn finish_simulation(self) -> PlotState<End> {
             if let Err(err) = browser::hide_ui() {
                 error!("Error hiding the browser {:#?}", err);
             }
-            let refresh_event = browser::draw_ui(run_simulation_button)
-                .and_then(|_unit| browser::find_html_element_by_id(run_simulation_id))
+            let refresh_event = browser::draw_ui(REFRESH_IMAGE_BUTTON)
+                .and_then(|_unit| browser::find_html_element_by_id(REFRESH_IMAGE_ID))
                 .map(button::add_click_handler)
                 .unwrap();
-            let save_event = browser::draw_ui(save_image_button)
-                .and_then(|_unit| browser::find_html_element_by_id(save_image_id))
+            let save_event = browser::draw_ui(SAVE_IMAGE_BUTTON)
+                .and_then(|_unit| browser::find_html_element_by_id(SAVE_IMAGE_ID))
                 .map(button::add_click_handler)
                 .unwrap();
             PlotState {
@@ -243,8 +240,8 @@ pub mod state_implementations {
             if let Err(err) = browser::hide_ui() {
                 error!("Error hiding the browser {:#?}", err);
             }
-            let start_event = browser::draw_ui(run_simulation_button)
-                .and_then(|_unit| browser::find_html_element_by_id(run_simulation_id))
+            let start_event = browser::draw_ui(RUN_SIMULATION_BUTTON)
+                .and_then(|_unit| browser::find_html_element_by_id(RUN_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
             self.plot.refresh();
