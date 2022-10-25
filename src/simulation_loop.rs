@@ -44,6 +44,10 @@ impl SimulationLoop {
             simulation.last_frame = perf;
             plot.update();
             plot.draw(&renderer);
+
+            if let Err(err) = request_animation_frame(f.borrow().as_ref().unwrap()) {
+                panic!("Error while requesting animation frame {:#?}", err);
+            }
         }));
 
         request_animation_frame(
