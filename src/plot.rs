@@ -1,6 +1,6 @@
 use crate::browser;
 use crate::button;
-use crate::canvas::{load_image, Image, Renderer};
+use crate::canvas::{load_image, load_image_data, Image, Renderer};
 use crate::constants::{IMAGE_SOURCE, RUN_SIMULATION_BUTTON, RUN_SIMULATION_ID};
 use crate::plot_machine::PlotMachine;
 use crate::simulation_loop::Simulation;
@@ -22,7 +22,6 @@ impl Simulation for SimulationPlot {
     async fn initialize(&self) -> Result<Box<dyn Simulation>> {
         match self.machine {
             None => {
-                log!("none in initialize");
                 let button = browser::draw_ui(RUN_SIMULATION_BUTTON)
                     .and_then(|_unit| browser::find_html_element_by_id(RUN_SIMULATION_ID))
                     .map(button::add_click_handler)
@@ -33,6 +32,7 @@ impl Simulation for SimulationPlot {
                     Image::new(
                         load_image(IMAGE_SOURCE).await?,
                         load_image(IMAGE_SOURCE).await?,
+                        load_image_data(IMAGE_SOURCE).await?,
                     ),
                     button,
                 );
@@ -54,7 +54,6 @@ impl Simulation for SimulationPlot {
 
     fn draw(&self, renderer: &Renderer) {
         if let Some(machine) = &self.machine {
-            log!("drawing");
             machine.draw(renderer);
         };
     }
