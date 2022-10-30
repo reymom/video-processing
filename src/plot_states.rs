@@ -11,14 +11,9 @@ pub mod state_implementations {
         plot: Image,
     }
 
-    impl<T> PlotState<T> {
-        pub fn draw(&self, renderer: &Renderer) {
-            self.plot.draw(renderer);
-        }
-    }
-
     pub struct Ready {
         start_event: UnboundedReceiver<()>,
+        image_drawn: bool,
     }
 
     impl From<PlotState<Ready>> for PlotMachine {
@@ -75,24 +70,38 @@ pub mod state_implementations {
     }
 
     impl PlotState<Ready> {
-        pub fn new(image: Image, button: UnboundedReceiver<()>) -> PlotState<Ready> {
+        pub fn draw(&self, renderer: &Renderer) {
+            log!("drawing from ready");
+            if self._state.image_drawn {
+                self.plot.put_image(renderer)
+            } else {
+                self.plot.draw(renderer);
+            }
+        }
+
+        pub fn new(
+            image: Image,
+            button: UnboundedReceiver<()>,
+            image_drawn: bool,
+        ) -> PlotState<Ready> {
             PlotState {
                 _state: Ready {
                     start_event: button,
+                    image_drawn,
                 },
                 plot: image,
             }
         }
 
-        pub fn update(mut self) -> ReadyStateTransition {
+        pub fn update(mut self, renderer: &Renderer) -> ReadyStateTransition {
             if self._state.run_simulation_pressed() {
-                ReadyStateTransition::Simulate(self.start_simulation())
+                ReadyStateTransition::Simulate(self.start_simulation(renderer))
             } else {
                 ReadyStateTransition::Same(self)
             }
         }
 
-        fn start_simulation(self) -> PlotState<Simulating> {
+        fn start_simulation(self, renderer: &Renderer) -> PlotState<Simulating> {
             if let Err(err) = browser::hide_ui() {
                 error!("Error hiding the browser {:#?}", err);
             }
@@ -104,12 +113,13 @@ pub mod state_implementations {
                 .and_then(|_unit| browser::find_html_element_by_id(FINISH_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
+
             PlotState {
                 _state: Simulating {
                     pause_event,
                     finish_event,
                 },
-                plot: self.plot,
+                plot: self.plot.load_image(renderer),
             }
         }
     }
@@ -146,6 +156,11 @@ pub mod state_implementations {
     }
 
     impl PlotState<Simulating> {
+        pub fn draw(&self, renderer: &Renderer) {
+            log!("draw from simulating");
+            self.plot.put_image(renderer);
+        }
+
         pub fn update(mut self) -> SimulatingStateTransition {
             if self._state.pause_simulation_pressed() {
                 SimulatingStateTransition::Pause(self.pause_simulation())
@@ -164,7 +179,7 @@ pub mod state_implementations {
                 .and_then(|_unit| browser::find_html_element_by_id(RUN_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
-            PlotState::new(self.plot, start_event)
+            PlotState::new(self.plot, start_event, true)
         }
 
         fn finish_simulation(self) -> PlotState<End> {
@@ -226,6 +241,10 @@ pub mod state_implementations {
     }
 
     impl PlotState<End> {
+        pub fn draw(&self, renderer: &Renderer) {
+            self.plot.put_image(renderer);
+        }
+
         pub fn update(mut self) -> EndStateTransition {
             if self._state.refresh_image_pressed() {
                 EndStateTransition::Refresh(self.refresh_image())
@@ -236,7 +255,7 @@ pub mod state_implementations {
             }
         }
 
-        fn refresh_image(mut self) -> PlotState<Ready> {
+        fn refresh_image(self) -> PlotState<Ready> {
             if let Err(err) = browser::hide_ui() {
                 error!("Error hiding the browser {:#?}", err);
             }
@@ -244,10 +263,12 @@ pub mod state_implementations {
                 .and_then(|_unit| browser::find_html_element_by_id(RUN_SIMULATION_ID))
                 .map(button::add_click_handler)
                 .unwrap();
-            self.plot.refresh();
             PlotState {
-                _state: Ready { start_event },
-                plot: self.plot,
+                _state: Ready {
+                    start_event,
+                    image_drawn: false,
+                },
+                plot: self.plot.refresh(),
             }
         }
 
