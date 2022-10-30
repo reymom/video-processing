@@ -3,6 +3,7 @@ mod browser;
 mod button;
 mod canvas;
 mod constants;
+mod image;
 mod plot;
 mod plot_machine;
 mod plot_states;
