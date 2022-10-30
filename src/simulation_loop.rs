@@ -9,7 +9,7 @@ use std::rc::Rc;
 #[async_trait(?Send)]
 pub trait Simulation {
     async fn initialize(&self) -> Result<Box<dyn Simulation>>;
-    fn update(&mut self);
+    fn update(&mut self, renderer: &Renderer);
     fn draw(&self, render: &Renderer);
 }
 
@@ -42,7 +42,7 @@ impl SimulationLoop {
                 simulation.accumulated_delta -= FRAME_SIZE;
             }
             simulation.last_frame = perf;
-            plot.update();
+            plot.update(&renderer);
             plot.draw(&renderer);
 
             if let Err(err) = request_animation_frame(f.borrow().as_ref().unwrap()) {

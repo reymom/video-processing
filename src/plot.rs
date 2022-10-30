@@ -1,6 +1,6 @@
 use crate::browser;
 use crate::button;
-use crate::canvas::{load_image, load_image_data, Image, Renderer};
+use crate::canvas::{load_image, Image, Renderer};
 use crate::constants::{IMAGE_SOURCE, RUN_SIMULATION_BUTTON, RUN_SIMULATION_ID};
 use crate::plot_machine::PlotMachine;
 use crate::simulation_loop::Simulation;
@@ -27,15 +27,7 @@ impl Simulation for SimulationPlot {
                     .map(button::add_click_handler)
                     .unwrap();
 
-                //todo: this repetition is due to the fact that HtmlImageElement does not implement the Copy trait and cannot clone
-                let machine = PlotMachine::new(
-                    Image::new(
-                        load_image(IMAGE_SOURCE).await?,
-                        load_image(IMAGE_SOURCE).await?,
-                        load_image_data(IMAGE_SOURCE).await?,
-                    ),
-                    button,
-                );
+                let machine = PlotMachine::new(Image::new(load_image(IMAGE_SOURCE).await?), button);
 
                 Ok(Box::new(SimulationPlot {
                     machine: Some(machine),
@@ -45,9 +37,9 @@ impl Simulation for SimulationPlot {
         }
     }
 
-    fn update(&mut self) {
+    fn update(&mut self, renderer: &Renderer) {
         if let Some(machine) = self.machine.take() {
-            self.machine.replace(machine.update());
+            self.machine.replace(machine.update(renderer));
         }
         assert!(self.machine.is_some());
     }

@@ -10,12 +10,12 @@ pub enum PlotMachine {
 
 impl PlotMachine {
     pub fn new(image: Image, button: UnboundedReceiver<()>) -> Self {
-        PlotMachine::Ready(PlotState::new(image, button))
+        PlotMachine::Ready(PlotState::new(image, button, false))
     }
 
-    pub fn update(self) -> Self {
+    pub fn update(self, renderer: &Renderer) -> Self {
         match self {
-            PlotMachine::Ready(state) => state.update().into(),
+            PlotMachine::Ready(state) => state.update(renderer).into(),
             PlotMachine::Simulating(state) => state.update().into(),
             PlotMachine::End(state) => state.update().into(),
         }
